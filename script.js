@@ -64,6 +64,7 @@ function formatTime(date) {
 function formatTimestamp(date) {
   return date.toLocaleString('ar-SA', { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
 }
+
 async function fetchJsonData(url) {
   try {
     const response = await fetch(url);
@@ -211,9 +212,17 @@ async function handleSubmit(event) {
   const formData = new FormData(visitForm);
   const now = new Date();
 
+  // الحصول على اسم العميل المختار من النموذج
+  const selectedCustomerName = formData.get('Customer_Name_AR');
+  // البحث عن كائن العميل في مصفوفة customersMain للحصول على Customer_Code
+  const customer = customersMain.find(c => c.Customer_Name_AR === selectedCustomerName);
+  // استخراج الكود، أو تعيينه إلى سلسلة فارغة إذا لم يتم العثور عليه
+  const customerCode = customer ? customer.Customer_Code : '';
+
   const dataToSubmit = {
     Visit_ID: generateVisitID(),
-    Customer_Name_AR: formData.get('Customer_Name_AR'),
+    Customer_Code: customerCode, // 👈 تم إضافة هذا الحقل
+    Customer_Name_AR: selectedCustomerName,
     Sales_Rep_Name_AR: formData.get('Sales_Rep_Name_AR'),
     Visit_Date: formatDate(now),
     Visit_Time: formatTime(now),
@@ -242,7 +251,6 @@ async function handleSubmit(event) {
   try {
     const response = await fetch(GOOGLE_SHEETS_WEB_APP_URL, {
       method: 'POST',
-      mode: 'no-cors',
       headers: {
         'Content-Type': 'application/json',
       },
